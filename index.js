@@ -6,10 +6,15 @@ import cors from "cors";
 import path from "path";
 
 // tạo đối tượng
+const corsConfig = {
+  origin: "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+};
 const app = express();
 app.use(express.json());
 
-app.use(cors());
+app.use(cors(corsConfig));
 app.use(express.json());
 
 app.use(express.static("public"));
