@@ -36,3 +36,4 @@ app.use(rootRoutes);
 app.listen(8080, () => {
   console.log("Sever online with port 8080");
 });
+module.exports = app;
