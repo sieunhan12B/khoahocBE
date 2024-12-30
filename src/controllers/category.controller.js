@@ -11,7 +11,7 @@ const model = initModels(sequelize);
 
 const getAllCategory = async (req, res) => {
   try {
-    const categories = await model.danhMucKhoaHoc.findAll();
+    const categories = await model.courseCategory.findAll();
     return res.status(200).json({ message: "success", data: categories });
   } catch (error) {
     return res.status(400).json({ message: "error", error: error.message });
@@ -20,16 +20,22 @@ const getAllCategory = async (req, res) => {
 
 const addCategory = async (req, res) => {
   try {
-    const { maDanhMuc, tenDanhMuc } = req.body;
-    const categoryExist = await model.danhMucKhoaHoc.findOne({
-      where: { maDanhMuc },
+    const { categoryId, categoryName } = req.body;
+    // Kiểm tra rỗng
+    if (!categoryId || !categoryName) {
+      return res
+        .status(400)
+        .json({ message: "categoryId và categoryName không được để trống" });
+    }
+    const categoryExist = await model.courseCategory.findOne({
+      where: { categoryId },
     });
     if (categoryExist) {
       return res.status(400).json({ message: "Danh mục đã tồn tại" });
     }
-    const newCategory = await model.danhMucKhoaHoc.create({
-      maDanhMuc,
-      tenDanhMuc,
+    const newCategory = await model.courseCategory.create({
+      categoryId,
+      categoryName,
     });
     return res.status(200).json({ message: "success", data: newCategory });
   } catch (error) {
@@ -39,32 +45,55 @@ const addCategory = async (req, res) => {
 
 const deleteCategory = async (req, res) => {
   try {
-    const { maDanhMuc } = req.params;
-    const categoryExist = await model.danhMucKhoaHoc.findOne({
-      where: { maDanhMuc },
+    const { categoryId } = req.params;
+    const categoryExist = await model.courseCategory.findOne({
+      where: { categoryId },
     });
     if (!categoryExist) {
       return res.status(400).json({ message: "Danh mục không tồn tại" });
     }
+
+    // Kiểm tra xem khóa học có học viên đăng ký không
+    const enrolledCaegory = await model.course.findAll({
+      where: { categoryId },
+    });
+
+    if (enrolledCaegory.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Danh mục này đã có khóa học đăn kí, không thể xóa" });
+    }
+
     // xóa khóa ngoại trước khi xóa danh mục
-    await model.khoaHoc.destroy({ where: { loaiDanhMuc: maDanhMuc } });
-    await model.danhMucKhoaHoc.destroy({ where: { maDanhMuc } });
+    // await model.course.destroy({ where: { categoryId: categoryId } });
+    await model.courseCategory.destroy({ where: { categoryId } });
     return res.status(200).json({ message: "Xóa danh mục thành công!" });
   } catch (error) {
-    return res.status(400).json({ message: "error", error: error.message });
+    return res
+      .status(400)
+      .json({ message: "Xóa danh mục thất bại", error: error.message });
   }
 };
 
 const updateCategory = async (req, res) => {
   try {
-    const { maDanhMuc, tenDanhMuc } = req.body;
-    const categoryExist = await model.danhMucKhoaHoc.findOne({
-      where: { maDanhMuc },
+    const { categoryId, categoryName } = req.body;
+    // Kiểm tra rỗng
+    if (!categoryId || !categoryName) {
+      return res
+        .status(400)
+        .json({ message: "categoryId và categoryName không được để trống" });
+    }
+    const categoryExist = await model.courseCategory.findOne({
+      where: { categoryId },
     });
     if (!categoryExist) {
       return res.status(400).json({ message: "Danh mục không tồn tại" });
     }
-    await model.danhMucKhoaHoc.update({ tenDanhMuc }, { where: { maDanhMuc } });
+    await model.courseCategory.update(
+      { categoryName },
+      { where: { categoryId } }
+    );
     return res.status(200).json({ message: "success" });
   } catch (error) {
     return res.status(400).json({ message: "error", error: error.message });

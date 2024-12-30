@@ -12,7 +12,7 @@ const userRoutes = express.Router();
 // userRoutes.post("/order", order);
 userRoutes.get("/LayDanhSachNguoiDung", getUsers);
 userRoutes.post("/ThemNguoiDung", addUser);
-userRoutes.delete("/XoaNguoiDung/:taiKhoan", deleteUser);
+userRoutes.delete("/XoaNguoiDung/:userId", deleteUser);
 userRoutes.put("/CapNhatThongTinNguoiDung", updateUser);
 userRoutes.get("/LayThongTinNguoiDung/:taiKhoan", getUser);
 

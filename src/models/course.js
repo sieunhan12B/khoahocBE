@@ -1,53 +1,57 @@
 import _sequelize from 'sequelize';
 const { Model, Sequelize } = _sequelize;
 
-export default class khoaHoc extends Model {
+export default class course extends Model {
   static init(sequelize, DataTypes) {
   return super.init({
-    maKhoaHoc: {
-      type: DataTypes.STRING(255),
+    courseId: {
+      type: DataTypes.STRING(50),
       allowNull: false,
       primaryKey: true
     },
-    tenKhoaHoc: {
+    courseName: {
       type: DataTypes.STRING(255),
       allowNull: false
     },
-    giaTien: {
-      type: DataTypes.DECIMAL(10,2),
+    price: {
+      type: DataTypes.BIGINT,
       allowNull: false
     },
-    moTa: {
+    description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    hinhAnh: {
+    image: {
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    nguoiTao: {
+    userId: {
       type: DataTypes.STRING(100),
       allowNull: false,
       references: {
         model: 'user',
-        key: 'taiKhoan'
+        key: 'userId'
       }
     },
-    loaiDanhMuc: {
+    categoryId: {
       type: DataTypes.STRING(255),
       allowNull: false,
       references: {
-        model: 'danhMucKhoaHoc',
-        key: 'maDanhMuc'
+        model: 'courseCategory',
+        key: 'categoryId'
       }
     },
-    ngayTao: {
+    creationDate: {
       type: DataTypes.DATEONLY,
       allowNull: false
+    },
+    updateDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
     }
   }, {
     sequelize,
-    tableName: 'khoaHoc',
+    tableName: 'course',
     timestamps: false,
     indexes: [
       {
@@ -55,21 +59,21 @@ export default class khoaHoc extends Model {
         unique: true,
         using: "BTREE",
         fields: [
-          { name: "maKhoaHoc" },
+          { name: "courseId" },
         ]
       },
       {
-        name: "nguoiTao",
+        name: "fk_creator",
         using: "BTREE",
         fields: [
-          { name: "nguoiTao" },
+          { name: "userId" },
         ]
       },
       {
-        name: "loaiDanhMuc",
+        name: "fk_typeCourse",
         using: "BTREE",
         fields: [
-          { name: "loaiDanhMuc" },
+          { name: "categoryId" },
         ]
       },
     ]

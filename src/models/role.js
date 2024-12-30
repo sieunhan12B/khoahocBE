@@ -1,21 +1,22 @@
 import _sequelize from 'sequelize';
 const { Model, Sequelize } = _sequelize;
 
-export default class danhMucKhoaHoc extends Model {
+export default class role extends Model {
   static init(sequelize, DataTypes) {
   return super.init({
-    maDanhMuc: {
-      type: DataTypes.STRING(255),
+    roleId: {
+      type: DataTypes.STRING(50),
       allowNull: false,
       primaryKey: true
     },
-    tenDanhMuc: {
-      type: DataTypes.STRING(255),
-      allowNull: true
+    roleName: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: "roleName"
     }
   }, {
     sequelize,
-    tableName: 'danhMucKhoaHoc',
+    tableName: 'role',
     timestamps: false,
     indexes: [
       {
@@ -23,7 +24,15 @@ export default class danhMucKhoaHoc extends Model {
         unique: true,
         using: "BTREE",
         fields: [
-          { name: "maDanhMuc" },
+          { name: "roleId" },
+        ]
+      },
+      {
+        name: "roleName",
+        unique: true,
+        using: "BTREE",
+        fields: [
+          { name: "roleName" },
         ]
       },
     ]

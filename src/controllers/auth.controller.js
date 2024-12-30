@@ -1,5 +1,6 @@
 import sequelize from "../models/connect.js";
 import initModels from "../models/init-models.js";
+import moment from "moment";
 // import bcrypt from "bcrypt";
 import { Op } from "sequelize";
 // import bcrypt from "bcrypt";
@@ -14,7 +15,8 @@ const register = async (req, res, next) => {
     /**
      * Bước 1: nhận dữ liệu từ FE
      */
-    const { taiKhoan, matKhau, hoTen, email, sdt } = req.body;
+    const { username, password, fullName, email, phone } = req.body;
+    console.log(username, password, fullName, email, phone);
     /**
      * Bước 2: kiểm tra email xem đã tồn tại trong db hay chưa
      *    - nếu tồn tại: trả lỗi "Tài khoản đã tồn tại"
@@ -22,7 +24,7 @@ const register = async (req, res, next) => {
      */
     const userExist = await model.user.findOne({
       where: {
-        [Op.or]: [{ email: email }, { taiKhoan: taiKhoan }, { sdt: sdt }],
+        [Op.or]: [{ email: email }, { username: username }, { phone: phone }],
       },
     });
 
@@ -34,14 +36,14 @@ const register = async (req, res, next) => {
         });
       }
 
-      if (userExist.taiKhoan === taiKhoan) {
+      if (userExist.username === username) {
         return res.status(400).json({
           message: "Tài khoản đã tồn tại",
           data: null,
         });
       }
 
-      if (userExist.sdt === sdt) {
+      if (userExist.phone === phone) {
         return res.status(400).json({
           message: "Số điện thoại đã tồn tại",
           data: null,
@@ -55,18 +57,33 @@ const register = async (req, res, next) => {
      * Bước 3: thêm người dùng mới vào db
      */
     // const userNew = await model.user.create({
-    //   hoTen: hoTen,
+    //   fullName: fullName,
     //   email: email,
-    //   matKhau: bcrypt.hashSync(matKhau, 10),
+    //   password: bcrypt.hashSync(password, 10),
     // });
 
+    // tạo id mới
+    const role = "HV";
+    const lastUser = await model.user.findOne({
+      where: { roleId: role },
+      order: [["userId", "DESC"]],
+    });
+    let newUserId;
+    if (lastUser) {
+      const lastUserIdNumber = parseInt(lastUser.userId.slice(role.length)) + 1;
+      newUserId = `${role}${lastUserIdNumber.toString().padStart(5, "0")}`;
+    } else {
+      newUserId = `${role}00001`;
+    }
+
     const newUser = await model.user.create({
-      taiKhoan,
-      matKhau,
-      hoTen,
+      userId: newUserId,
+      username,
+      password,
+      fullName,
       email,
-      sdt,
-      role: "HV", // Default role to 'user' if not provided
+      phone,
+      roleId: "HV", // Default roleId to 'user' if not provided
     });
     return res.status(200).json({ message: "success", data: newUser });
 
@@ -75,7 +92,7 @@ const register = async (req, res, next) => {
     //   from: process.env.MAIL_USER,
     //   to: email,
     //   subject: "Welcome to Our service",
-    //   text: `Hello ${hoTen}. ${matKhau} Best Regards.`,
+    //   text: `Hello ${fullName}. ${password} Best Regards.`,
     //   html: `<h1>ahihihi đồ ngốc</h1>`,
     // };
 
@@ -95,13 +112,14 @@ const register = async (req, res, next) => {
       .json({ message: "Fail to create user", error: error.message });
   }
 };
+
 // đăng nhập
 const login = async (req, res) => {
   try {
-    let { taiKhoan, matKhau } = req.body;
+    let { username, password } = req.body;
     let user = await model.user.findOne({
       where: {
-        [Op.and]: [{ taiKhoan: taiKhoan }, { matKhau: matKhau }],
+        [Op.and]: [{ username: username }, { password: password }],
       },
     });
 
@@ -113,7 +131,7 @@ const login = async (req, res) => {
     }
 
     // Check if password matches (assuming you have bcrypt imported and used)
-    // let checkPass = (matKhau, user.matKhau);
+    // let checkPass = (password, user.password);
     // if (!checkPass) {
     //   return res.status(400).json({ message: "Mật khẩu không đúng" });
     // }
@@ -123,27 +141,77 @@ const login = async (req, res) => {
     return res.status(400).json({ message: "error", error: error.message });
   }
 };
+
+//Lấy thông tin người dùng
 const getInfoUser = async (req, res) => {
   try {
-    const { taiKhoan } = req.params;
-    const user = await model.user.findOne({ where: { taiKhoan } });
-    return res.status(200).json({ message: "success", data: user });
+    const { userId } = req.params;
+    // console.log(username);
+
+    // Tìm thông tin người dùng
+    const user = await model.user.findOne({
+      where: { userId },
+      include: [
+        {
+          model: model.userCourse,
+          as: "coursesPurchased",
+          include: [
+            {
+              model: model.course,
+              as: "coursesDetails",
+              attributes: ["courseId", "courseName", "image", "description"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Lấy chi tiết các khóa học và định dạng lại dữ liệu
+    const courses = user.coursesPurchased.map((enrollment) => ({
+      courseId: enrollment.coursesDetails.courseId,
+      courseName: enrollment.coursesDetails.courseName,
+      image: enrollment.coursesDetails.image,
+      description: enrollment.coursesDetails.description,
+      registrationDate: moment(enrollment.registrationDate).format(
+        "DD-MM-YYYY"
+      ),
+    }));
+
+    return res.status(200).json({
+      message: "success",
+      data: {
+        userId: user.userId,
+        username: user.username,
+        password: user.password,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        roleId: user.roleId,
+        coursesPurchased: courses,
+      },
+    });
   } catch (error) {
+    console.error(error); // Ghi lại lỗi để phục vụ mục đích gỡ lỗi
     return res.status(400).json({ message: "error", error: error.message });
   }
 };
+
 const updateInfoUser = async (req, res) => {
   try {
-    const { taiKhoan, hoTen, email, sdt, matKhau } = req.body;
-    let user = await model.user.findOne({ where: { taiKhoan } });
+    const { username, fullName, email, phone, password } = req.body;
+    let user = await model.user.findOne({ where: { username } });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     await model.user.update(
-      { hoTen, email, sdt, matKhau },
-      { where: { taiKhoan } }
+      { fullName, email, phone, password },
+      { where: { username } }
     );
-    user = await model.user.findByPk(taiKhoan);
+    user = await model.user.findByPk(username);
 
     return res.status(200).json({ message: "success", data: user });
   } catch (error) {

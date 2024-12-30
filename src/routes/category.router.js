@@ -9,6 +9,6 @@ const categoryRouter = express.Router();
 
 categoryRouter.get("/LayDanhSachDanhMuc", getAllCategory);
 categoryRouter.post("/ThemDanhMuc", addCategory);
-categoryRouter.delete("/XoaDanhMuc/:maDanhMuc", deleteCategory);
+categoryRouter.delete("/XoaDanhMuc/:categoryId", deleteCategory);
 categoryRouter.put("/CapNhatDanhMuc", updateCategory);
 export default categoryRouter;

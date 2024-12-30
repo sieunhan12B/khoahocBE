@@ -8,27 +8,39 @@ import {
   getCourseById,
   getCourseByCategory,
   getCourseByName,
-  getCourseByUserId,
+  getCourseByTeacher,
+  getCourseByStudent,
+  addCoursesToStudent,
+  getCourseByKeyword,
 } from "../controllers/course.controller.js";
 
 const courseRoutes = express.Router();
 
 courseRoutes.get("/LayDanhSachKhoaHoc", getCourse);
-courseRoutes.post("/ThemKhoaHoc", upload.single("hinhAnh"), addCourse);
-courseRoutes.delete("/XoaKhoaHoc/:maKhoaHoc", deleteCourse);
-courseRoutes.put("/CapNhatKhoaHoc", upload.single("hinhAnh"), updateCourse);
-courseRoutes.get("/LayThongTinKhoaHocTheoMaKhoaHoc/:maKhoaHoc", getCourseById);
+courseRoutes.post("/ThemKhoaHoc", upload.single("image"), addCourse);
+courseRoutes.delete("/XoaKhoaHoc/:courseId", deleteCourse);
+courseRoutes.put("/CapNhatKhoaHoc", upload.single("image"), updateCourse);
+courseRoutes.get("/LayThongTinKhoaHocTheoMaKhoaHoc/:courseId", getCourseById);
 courseRoutes.get(
-  "/LayDanhSachKhoaHocTheoDanhMuc/:maDanhMuc",
+  "/LayDanhSachKhoaHocTheoDanhMuc/:categoryId",
   getCourseByCategory
 );
 courseRoutes.get(
-  "/LayDanhSachKhoaHocTheoTenKhoaHoc/:tenKhoaHoc",
+  "/LayDanhSachKhoaHocTheoTenKhoaHoc/:courseName",
   getCourseByName
 );
 courseRoutes.get(
-  "/LayDanhSachKhoaHocTheoMaNguoiDung/:maNguoiDung",
-  getCourseByUserId
+  "/LayDanhSachKhoaHocTheoMaGiangVien/:userId",
+  getCourseByTeacher
 );
+courseRoutes.get(
+  "/LayDanhSachKhoaHocTheoMaHocVien/:userId",
+  getCourseByStudent
+);
+courseRoutes.get(
+  "/LayDanhSachKhoaHocTheoTuKhoaTimKiem/:keyword",
+  getCourseByKeyword
+);
+courseRoutes.post("/DangKyKhoaHoc", addCoursesToStudent);
 
 export default courseRoutes;
